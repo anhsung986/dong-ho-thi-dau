@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đồng Hồ & Bấm Giờ Thi Đấu</title>
+    <!-- Tích hợp bộ font cao cấp: Inter cho chữ giao diện, JetBrains Mono cho số cực kỳ sắc nét -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; }
+        body {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4, #a1c4fd, #c2e9fb, #d4fc79);
+            background-size: 400% 400%;
+            animation: rainbowBG 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        @keyframes rainbowBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 20px; }
+        .card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 20px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; border: 1px solid rgba(255,255,255,0.6); }
+        
+        .card-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 16px; color: #e84393; letter-spacing: 0.8px; text-transform: uppercase; }
+        
+        /* Font chữ số chuyên dụng, nét thanh đậm cực đẹp */
+        .time-display { 
+            font-family: 'JetBrains Mono', monospace; 
+            font-size: 2.4rem; 
+            font-weight: 800; 
+            margin: 12px 0; 
+            letter-spacing: 1px;
+            font-variant-numeric: tabular-nums; 
+        }
+        #vn-clock { color: #0984e3; }
+        #cd-display { color: #e17055; }
+        #race-display { color: #00b894; }
+        
+        .date-display { font-size: 0.9rem; color: #6c5ce7; font-weight: 600; letter-spacing: 0.3px; }
+
+        .config-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 14px; font-weight: 600; color: #2d3436; font-size: 0.9rem; }
+        .config-row input { width: 60px; padding: 8px; text-align: center; border: 2px solid #a29bfe; border-radius: 10px; font-weight: 700; font-size: 0.95rem; font-family: 'JetBrains Mono', monospace; color: #6c5ce7; outline: none; background: #f8f9fa; }
+        
+        .name-embed-box {
+            background: linear-gradient(135deg, rgba(162, 155, 254, 0.08), rgba(129, 236, 236, 0.08));
+            border: 2px dashed #a29bfe;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            text-align: left;
+        }
+        .name-embed-box label { font-size: 0.88rem; font-weight: 700; color: #6c5ce7; letter-spacing: 0.2px; }
+        .name-embed-box input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #74b9ff;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            color: #2d3436;
+            outline: none;
+            background: #fff;
+        }
+
+        .ranking-container { margin-top: 16px; text-align: left; background: #f8f9fa; padding: 14px; border-radius: 12px; border: 2px solid #dfe6e9; }
+        .ranking-title { font-weight: 800; margin-bottom: 10px; color: #d63031; font-size: 0.9rem; letter-spacing: 0.3px; }
+        .ranking-list { list-style: none; font-size: 0.88rem; }
+        .ranking-list li { padding: 8px 6px; border-bottom: 1px dashed #dfe6e9; display: flex; justify-content: space-between; font-weight: 600; color: #2d3436; }
+        .ranking-list li span { color: #0984e3; font-weight: 700; }
+        .ranking-list li b { color: #e17055; font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 700; }
+        
+        .btn { padding: 12px 20px; border: none; border-radius: 12px; cursor: pointer; color: white; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.5px; width: 100%; touch-action: manipulation; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn:active { transform: scale(0.97); }
+        .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+        .btn-start { background: linear-gradient(135deg, #00b894, #00cec9); }
+        .btn-stop { background: linear-gradient(135deg, #e17055, #d63031); }
+        .btn-reset { background: linear-gradient(135deg, #ff7675, #d63031); }
+        
+        .winner-banner { margin-top: 16px; padding: 14px; background: linear-gradient(135deg, #ffeaa7, #fdcb6e); color: #d63031; border-radius: 12px; font-weight: 800; display: none; line-height: 1.5; font-size: 0.95rem; text-align: center; }
+
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; text-align: center; width: 85%; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .modal-content h3 { color: #d63031; font-weight: 800; margin-bottom: 10px; font-size: 1.1rem; }
+        .modal-content p { color: #2d3436; font-size: 0.9rem; font-weight: 600; line-height: 1.4; }
+        .modal-content button { margin-top: 18px; padding: 10px 25px; background: #0984e3; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <div id="modal">
+        <div class="modal-content">
+            <h3>⚠️ Thông báo</h3>
+            <p id="modal-text">Nội dung thông báo</p>
+            <button onclick="closeModal()">Đóng</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 1. GIỜ VIỆT NAM -->
+        <div class="card">
+            <div class="card-title">⏰ Giờ Việt Nam (ICT)</div>
+            <div class="time-display" id="vn-clock">00:00:00.00</div>
+            <div class="date-display" id="vn-date">--/--/----</div>
+        </div>
+
+        <!-- 2. BỘ ĐẾM NGƯỢC -->
+        <div class="card">
+            <div class="card-title">⏳ Bộ Đếm Ngược</div>
+            <div class="config-row">
+                <span>Giờ:</span> <input type="number" id="cd-h" value="0" oninput="updateCDDisplay()">
+                <span>Phút:</span> <input type="number" id="cd-m" value="6" oninput="updateCDDisplay()">
+                <span>Giây:</span> <input type="number" id="cd-s" value="6" oninput="updateCDDisplay()">
+            </div>
+            <div class="time-display" id="cd-display">00:06:06.00</div>
+            <div class="btn-group">
+                <button class="btn btn-start" id="cd-btn" onclick="toggleCD()">Bắt Đầu</button>
+                <button class="btn btn-reset" onclick="resetCD()">Đặt Lại</button>
+            </div>
+        </div>
+
+        <!-- 3. BẤM GIÂY THI ĐẤU -->
+        <div class="card">
+            <div class="card-title">🏁 Bấm Giây Thi Đấu</div>
+            <div class="config-row" style="margin-bottom: 15px;">
+                <span>Số người (≥ 2):</span> <input type="number" id="race-count" value="2" min="2">
+            </div>
+
+            <!-- Khung Embed nhập tên người chơi -->
+            <div class="name-embed-box" id="embed-box">
+                <label id="embed-label">Nhập tên Người 1:</label>
+                <input type="text" id="player-name-input" placeholder="Nhập tên tại đây...">
+            </div>
+
+            <div class="time-display" id="race-display">00:00.00</div>
+            
+            <button class="btn btn-start" id="race-btn" style="touch-action: manipulation;">Bắt Đầu</button>
+            <button class="btn btn-reset" onclick="resetRace()" style="margin-top: 10px;">Đặt Lại</button>
+
+            <div class="winner-banner" id="winner-banner"></div>
+            
+            <div class="ranking-container">
+                <div class="ranking-title">🏆 Bảng xếp hạng:</div>
+                <ul class="ranking-list" id="ranking-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GIỜ VIỆT NAM ---
+        setInterval(() => {
+            const now = new Date();
+            const time = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(now);
+            const ms = Math.floor(now.getMilliseconds() / 10).toString().padStart(2, '0');
+            document.getElementById('vn-clock').innerText = `${time}.${ms}`;
+            document.getElementById('vn-date').innerText = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'full' }).format(now);
+        }, 100);
+
+        // --- ĐẾM NGƯỢC ---
+        let cdTimer = null, cdTime = 0, isCdRunning = false, cdTargetTime = 0;
+        
+        function updateCDDisplay() {
+            if (!isCdRunning) {
+                let h = parseInt(document.getElementById('cd-h').value || 0);
+                let m = parseInt(document.getElementById('cd-m').value || 0);
+                let s = parseInt(document.getElementById('cd-s').value || 0);
+                cdTime = (h * 3600 + m * 60 + s) * 1000;
+                renderCD(cdTime);
+            }
+        }
+
+        function renderCD(t) {
+            t = Math.max(0, t);
+            let hours = Math.floor(t / 3600000);
+            let mins = Math.floor((t % 3600000) / 60000);
+            let secs = Math.floor((t % 60000) / 1000);
+            let millis = Math.floor((t % 1000) / 10);
+            
+            let displayStr = hours > 0 
+                ? `${String(hours).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}.${String(millis).padStart(2,'0')}`
+                : `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}.${String(millis).padStart(2,'0')}`;
+            
+            document.getElementById('cd-display').innerText = displayStr;
+        }
+
+        function toggleCD() {
+            if (!isCdRunning) {
+                let h = parseInt(document.getElementById('cd-h').value || 0);
+                let m = parseInt(document.getElementById('cd-m').value || 0);
+                let s = parseInt(document.getElementById('cd-s').value || 0);
+                
+                if (cdTime <= 0) {
+                    cdTime = (h * 3600 + m * 60 + s) * 1000;
+                }
+                if (cdTime <= 0) return;
+
+                isCdRunning = true;
+                document.getElementById('cd-btn').innerText = "Tạm Dừng";
+                document.getElementById('cd-btn').className = "btn btn-stop";
+                
+                cdTargetTime = performance.now() + cdTime;
+                
+                function stepCD() {
+                    if (!isCdRunning) return;
+                    let now = performance.now();
+                    cdTime = cdTargetTime - now;
+                    
+                    if (cdTime <= 0) {
+                        cdTime = 0;
+                        isCdRunning = false;
+                        document.getElementById('cd-btn').innerText = "Bắt Đầu";
+                        document.getElementById('cd-btn').className = "btn btn-start";
+                        renderCD(0);
+                        clearInterval(cdTimer);
+                        return;
+                    }
+                    renderCD(cdTime);
+                }
+                cdTimer = setInterval(stepCD, 30);
+            } else {
+                isCdRunning = false;
+                clearInterval(cdTimer);
+                document.getElementById('cd-btn').innerText = "Tiếp Tục";
+                document.getElementById('cd-btn').className = "btn btn-start";
+            }
+        }
+
+        function resetCD() {
+            isCdRunning = false;
+            clearInterval(cdTimer);
+            document.getElementById('cd-btn').innerText = "Bắt Đầu";
+            document.getElementById('cd-btn').className = "btn btn-start";
+            updateCDDisplay();
+        }
+
+        updateCDDisplay();
+
+        // --- BẤM GIÂY THI ĐẤU ---
+        let raceTimer = null, raceStart = 0, raceElapsed = 0, isRaceRunning = false, isFinished = false, currentP = 1, results = [];
+        
+        function showAlert(msg) {
+            document.getElementById('modal-text').innerText = msg;
+            document.getElementById('modal').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+        const raceBtn = document.getElementById('race-btn');
+        raceBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            handleRaceAction();
+        });
+
+        function handleRaceAction() {
+            if (isFinished) { 
+                showAlert(`Cuộc thi đã kết thúc. Vui lòng bấm "Đặt lại" để bắt đầu lượt mới!`);
+                return; 
+            }
+
+            const total = parseInt(document.getElementById('race-count').value);
+            const nameInput = document.getElementById('player-name-input');
+            const playerName = nameInput.value.trim();
+            
+            if(!isRaceRunning) {
+                if(playerName === "") {
+                    showAlert(`Vui lòng nhập tên cho Người ${currentP} trước khi bấm bắt đầu!`);
+                    return;
+                }
+
+                let isDuplicate = results.some(r => r.name.toLowerCase() === playerName.toLowerCase());
+                if(isDuplicate) {
+                    showAlert(`Tên "${playerName}" đã tồn tại trong danh sách! Vui lòng nhập tên khác.`);
+                    return;
+                }
+
+                isRaceRunning = true;
+                nameInput.disabled = true;
+                raceStart = performance.now() - raceElapsed;
+                
+                raceBtn.innerText = "Dừng lại";
+                raceBtn.className = "btn btn-stop";
+                
+                raceTimer = setInterval(() => {
+                    raceElapsed = performance.now() - raceStart;
+                    let m = Math.floor(raceElapsed / 60000);
+                    let s = Math.floor((raceElapsed % 60000) / 1000);
+                    let ms = Math.floor((raceElapsed % 1000) / 10);
+                    document.getElementById('race-display').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
+                }, 30);
+                
+            } else {
+                isRaceRunning = false;
+                clearInterval(raceTimer);
+                
+                let finalTimeStr = document.getElementById('race-display').innerText;
+                let finalTimeVal = raceElapsed;
+                
+                results.push({ p: currentP, name: playerName, time: finalTimeVal, str: finalTimeStr });
+                
+                let li = document.createElement('li');
+                li.innerHTML = `<span>${playerName}:</span> <b>${finalTimeStr}</b>`;
+                document.getElementById('ranking-list').appendChild(li);
+
+                if(currentP < total) {
+                    currentP++;
+                    nameInput.value = "";
+                    nameInput.disabled = false;
+                    document.getElementById('embed-label').innerText = `Nhập tên Người ${currentP}:`;
+                    raceBtn.innerText = "Bắt Đầu";
+                    raceBtn.className = "btn btn-start";
+                    raceElapsed = 0;
+                    document.getElementById('race-display').innerText = "00:00.00";
+                    nameInput.focus();
+                } else { finishRace(); }
+            }
+        }
+
+        function finishRace() {
+            isFinished = true;
+            raceBtn.innerText = "Đã Kết Thúc";
+            raceBtn.className = "btn btn-start";
+            raceBtn.style.opacity = "0.5";
+            document.getElementById('embed-box').style.display = 'none';
+            
+            let minTime = Math.min(...results.map(r => r.time));
+            let winners = results.filter(r => Math.abs(r.time - minTime) < 15);
+
+            let winnerNames = winners.map(w => w.name).join(" & ");
+            document.getElementById('winner-banner').style.display = 'block';
+            document.getElementById('winner-banner').innerHTML = `🏆 Xin chúc mừng:<br>${winnerNames} về nhất với ${winners[0].str}`;
+        }
+        
+        function resetRace() {
+            isRaceRunning = false;
+            clearInterval(raceTimer);
+            currentP = 1; results = []; raceElapsed = 0; isFinished = false;
+            
+            const nameInput = document.getElementById('player-name-input');
+            nameInput.value = "";
+            nameInput.disabled = false;
+            document.getElementById('embed-box').style.display = 'flex';
+            document.getElementById('embed-label').innerText = `Nhập tên Người 1:`;
+            
+            raceBtn.innerText = "Bắt Đầu";
+            raceBtn.className = "btn btn-start";
+            raceBtn.style.opacity = "1";
+            document.getElementById('race-display').innerText = "00:00.00";
+            document.getElementById('ranking-list').innerHTML = '';
+            document.getElementById('winner-banner').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
