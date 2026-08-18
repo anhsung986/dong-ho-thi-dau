@@ -1,64 +1,30 @@
-name: Build Web App to Universal APK
+name: Build APK
 
-on:
-  push:
-    branches: [ "main", "master" ]
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Prepare Web Directory & Install Capacitor
-        run: |
-          mkdir -p www
-          cp -r *.html *.css *.js www/ 2>/dev/null || true
-          npm init -y
-          npm install @capacitor/core@5.7.0 @capacitor/cli@5.7.0 @capacitor/android@5.7.0 @capacitor/assets --save-dev
-          
-          # Tao config JSON
-          echo '{"appId":"com.anhsung.chidoi","appName":"Chidoi App","webDir":"www"}' > capacitor.config.json
-          
-          npx cap add android
-          npx cap sync android
-
-          # Tao Icon neu co
-          if [ -f "icon.png" ]; then
-            npx capacitor-assets generate --android
-          fi
-
-          cd android
-          echo "org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8" >> gradle.properties
-          echo "android.useAndroidX=true" >> gradle.properties
-          echo "android.enableJetifier=true" >> gradle.properties
-          sed -i 's/gradle-8.2.1-all.zip/gradle-8.0.2-all.zip/g' gradle/wrapper/gradle-wrapper.properties
-
-      - name: Build APK Debug (Cài trực tiếp ngon lành)
-        run: |
-          cd android
-          sed -i 's/minSdkVersion = .*/minSdkVersion = 22/' variables.gradle 2>/dev/null || true
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
-          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/ChidoiApp.apk
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dong-ho
-          path: android/app/build/outputs/apk/debug/ChidoiApp.apk
-          
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    - run: |
+        npm install -g @ionic/cli @capacitor/cli
+        mkdir -p myapp && cd myapp
+        npm init -y
+        npx @capacitor/cli init DongHo com.sunganh.dongho --web-dir .
+        npx cap add android
+        cd android
+        chmod +x gradlew
+        ./gradlew assembleDebug
+    - uses: actions/upload-artifact@v4
+      with:
+        name: apk-file
+        path: myapp/android/app/build/outputs/apk/debug/*.apk
+        
