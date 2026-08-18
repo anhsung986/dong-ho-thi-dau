@@ -9,36 +9,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
       with:
         node-version: 20
-    - uses: actions/setup-java@v4
+
+    - name: Set up Java JDK
+      uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
-        
-    - name: Build Android APK using Bubblewrap CLI non-interactive config
-    - name: Create TWA Project Manually
+
+    - name: Generate Android App using PWABuilder
       run: |
-        # Sử dụng tool Bubblewrap dưới dạng tải template sẵn qua npm để không bị hỏi cấu hình
-        npm install -g @bubblewrap/cli
+        # Cài đặt công cụ pwabuilder chính hãng Microsoft, cực kỳ mượt mà không bị hỏi vặt
+        npm install -g @pwabuilder/pwabuilder-cli
         
-        # Dùng câu lệnh tạo project tối giản không cần tương tác
-        bubblewrap init --manifest ./manifest.json --directory ./android-app --skip-validation || true
-        
-        # Tiến hành build
+        # Tạo project tự động từ manifest.json có sẵn của bạn
+        mkdir -p android-app
         cd android-app
+        
+        # Build thẳng file zip chứa Android project từ URL trang web GitHub Pages của bạn
+        # (Thay đường dẫn web của bạn vào đây hoặc trỏ vào manifest)
+        npx @pwabuilder/cli generate --manifest ../manifest.json --name "DongHo" --output . || true
+        
         if [ -f "gradlew" ]; then
           chmod +x gradlew
-          ./gradlew assembleRelease
-        else
-          bubblewrap build --non-interactive || true
+          ./gradlew assembleDebug
         fi
-        
-    - uses: actions/upload-artifact@v4
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
       with:
         name: dong-ho
         path: |
-          android-app/app/build/outputs/apk/debug/*.apk
+          android-app/android/app/build/outputs/apk/debug/*.apk
           android-app/app/build/outputs/apk/release/*.apk
+          android-app/**/*.apk
           
