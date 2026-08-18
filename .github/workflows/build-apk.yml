@@ -1,0 +1,65 @@
+name: Build Web App to Universal APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Set up Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install Bubblewrap CLI
+      run: npm install -g @pwabuilder/bubblewrap
+
+    - name: Build Android APK
+      run: |
+        # Cấu hình tự động cho Bubblewrap không cần hỏi thủ công
+        cat << 'EOF' > bwr-config.json
+        {
+          "manifestUrl": "./manifest.json",
+          "appName": "Đồng Hồ Của Và thi đấu",
+          "shortName": "DongHo",
+          "startUrl": "./index.html",
+          "display": "standalone",
+          "themeColor": "#ff9a9e",
+          "backgroundColor": "#ffffff",
+          "iconUrl": "./anh.png",
+          "packageId": "com.sunganh.dongho",
+          "appVersion": "1.0.0",
+          "appVersionCode": 1,
+          "signingKey": {
+            "path": "android.keystore",
+            "alias": "android"
+          }
+        }
+        EOF
+        
+        # Khởi tạo và build APK dạng debug
+        bubblewrap init --manifest ./manifest.json --directory ./android-app --skip-validation || true
+        cd android-app
+        bubblewrap build --manifest ../manifest.json
+    
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dong-ho-va-thi-dau
+        path: |
+          android-app/app/build/outputs/apk/debug/*.apk
+          android-app/app/build/outputs/apk/release/*.apk
+          
