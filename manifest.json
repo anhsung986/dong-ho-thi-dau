@@ -1,0 +1,16 @@
+{
+  "name": "Đồng Hồ Và thi đấu",
+  "short_name": "Sung Anh App",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff9a9e",
+  "icons": [
+    {
+      "src": "anh.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
