@@ -1,4 +1,5 @@
 name: Build Web App to Universal APK
+
 on:
   push:
     branches: [ "main", "master" ]
@@ -7,30 +8,57 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Java JDK
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
 
-    - name: Build APK manually
-      run: |
-        # Không dùng CLI, tự tạo thư mục cấu trúc Android đơn giản
-        mkdir -p my-app
-        
-        # Tải project mẫu từ GitHub (cách này ổn định nhất)
-        git clone https://github.com/GoogleChromeLabs/bubblewrap-cli.git temp-dir
-        cp -r temp-dir/packages/cli/* my-app/
-        
-        echo "Build hoàn tất (giả lập)"
-        # Ở đây bạn có thể thêm lệnh build gradle của riêng bạn nếu có sẵn file build.gradle
-        
-    - name: Upload dummy artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: thong-bao
-        path: my-app/
-        
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Prepare Web Directory & Install Capacitor
+        run: |
+          mkdir -p www
+          cp -r *.html *.css *.js www/ 2>/dev/null || true
+          npm init -y
+          npm install @capacitor/core@5.7.0 @capacitor/cli@5.7.0 @capacitor/android@5.7.0 @capacitor/assets --save-dev
+          
+          # Tao config JSON
+          echo '{"appId":"com.anhsung.chidoi","appName":"Chidoi App","webDir":"www"}' > capacitor.config.json
+          
+          npx cap add android
+          npx cap sync android
+
+          # Tao Icon neu co
+          if [ -f "icon.png" ]; then
+            npx capacitor-assets generate --android
+          fi
+
+          cd android
+          echo "org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8" >> gradle.properties
+          echo "android.useAndroidX=true" >> gradle.properties
+          echo "android.enableJetifier=true" >> gradle.properties
+          sed -i 's/gradle-8.2.1-all.zip/gradle-8.0.2-all.zip/g' gradle/wrapper/gradle-wrapper.properties
+
+      - name: Build APK Debug (Cài trực tiếp ngon lành)
+        run: |
+          cd android
+          sed -i 's/minSdkVersion = .*/minSdkVersion = 22/' variables.gradle 2>/dev/null || true
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/ChidoiApp.apk
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dong-ho
+          path: android/app/build/outputs/apk/debug/ChidoiApp.apk
+          
