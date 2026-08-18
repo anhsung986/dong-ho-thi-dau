@@ -20,12 +20,10 @@ jobs:
     
     - name: Build APK
       run: |
-        # Xóa thư mục cũ để tạo mới từ đầu
         rm -rf android-app
         
-        # Chạy init với --non-interactive và trỏ thẳng vào manifest
-        # Đây là cách chính thống để không bị dừng lại hỏi han
-        bubblewrap init --manifest ./manifest.json --directory ./android-app --non-interactive
+        # Dùng lệnh yes n để tự động trả lời 'No' cho mọi câu hỏi của Bubblewrap init
+        yes n | bubblewrap init --manifest ./manifest.json --directory ./android-app --non-interactive || true
         
         cd android-app
         bubblewrap build --non-interactive
@@ -33,5 +31,7 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: dong-ho
-        path: android-app/app/build/outputs/apk/release/*.apk
-        
+        path: |
+          android-app/app/build/outputs/apk/debug/*.apk
+          android-app/app/build/outputs/apk/release/*.apk
+          
