@@ -1,12 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-        <!-- Cấu hình nhận diện Web App (PWA) -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ff9a9e">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đồng Hồ & Bấm Giờ Thi Đấu</title>
@@ -41,6 +35,7 @@
         }
         #vn-clock { color: #0984e3; }
         #cd-display { color: #e17055; }
+        #sw-display { color: #6c5ce7; }
         #race-display { color: #00b894; }
         
         .date-display { font-size: 0.9rem; color: #6c5ce7; font-weight: 600; letter-spacing: 0.3px; }
@@ -126,6 +121,16 @@
             <div class="btn-group">
                 <button class="btn btn-start" id="cd-btn" onclick="toggleCD()">Bắt Đầu</button>
                 <button class="btn btn-reset" onclick="resetCD()">Đặt Lại</button>
+            </div>
+        </div>
+
+        <!-- 2.5. ĐỒNG HỒ BẤM GIỜ TỪ 0 (STOPWATCH) -->
+        <div class="card">
+            <div class="card-title">⏱️ Đồng Hồ Bấm Giờ</div>
+            <div class="time-display" id="sw-display">00:00:00.00</div>
+            <div class="btn-group">
+                <button class="btn btn-start" id="sw-btn" onclick="toggleSW()">Bắt Đầu</button>
+                <button class="btn btn-reset" onclick="resetSW()">Đặt Lại</button>
             </div>
         </div>
 
@@ -244,6 +249,44 @@
         }
 
         updateCDDisplay();
+
+        // --- ĐỒNG HỒ BẤM GIỜ (STOPWATCH) TỪ 0 ---
+        let swTimer = null, swElapsed = 0, isSwRunning = false, swStartTime = 0;
+
+        function toggleSW() {
+            if (!isSwRunning) {
+                isSwRunning = true;
+                document.getElementById('sw-btn').innerText = "Tạm Dừng";
+                document.getElementById('sw-btn').className = "btn btn-stop";
+                swStartTime = performance.now() - swElapsed;
+                swTimer = setInterval(updateSW, 30);
+            } else {
+                isSwRunning = false;
+                clearInterval(swTimer);
+                document.getElementById('sw-btn').innerText = "Tiếp Tục";
+                document.getElementById('sw-btn').className = "btn btn-start";
+            }
+        }
+
+        function updateSW() {
+            swElapsed = performance.now() - swStartTime;
+            let h = Math.floor(swElapsed / 3600000);
+            let m = Math.floor((swElapsed % 3600000) / 60000);
+            let s = Math.floor((swElapsed % 60000) / 1000);
+            let ms = Math.floor((swElapsed % 1000) / 10);
+            
+            document.getElementById('sw-display').innerText = 
+                `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
+        }
+
+        function resetSW() {
+            isSwRunning = false;
+            clearInterval(swTimer);
+            swElapsed = 0;
+            document.getElementById('sw-display').innerText = "00:00:00.00";
+            document.getElementById('sw-btn').innerText = "Bắt Đầu";
+            document.getElementById('sw-btn').className = "btn btn-start";
+        }
 
         // --- BẤM GIÂY THI ĐẤU ---
         let raceTimer = null, raceStart = 0, raceElapsed = 0, isRaceRunning = false, isFinished = false, currentP = 1, results = [];
