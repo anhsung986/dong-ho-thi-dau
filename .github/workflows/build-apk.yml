@@ -1,5 +1,4 @@
 name: Build Web App to Universal APK
-
 on:
   push:
     branches: [ "main", "master" ]
@@ -8,65 +7,31 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 20
-
-    - name: Set up Java JDK
-      uses: actions/setup-java@v4
+    - uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
-
-    - name: Install Bubblewrap
-      run: npm install -g @bubblewrap/cli
-
-    - name: Build Android APK
-      run: |
-        mkdir -p android-app
-        
-        cat << 'EOF' > android-app/bwr-config.json
-        {
-          "manifestUrl": "../manifest.json",
-          "appName": "Đồng Hồ Và Thi Đấu",
-          "shortName": "DongHo",
-          "startUrl": "./index.html",
-          "display": "standalone",
-          "themeColor": "#ff9a9e",
-          "backgroundColor": "#ffffff",
-          "iconUrl": "./anh.png",
-          "packageId": "com.sunganh.dongho",
-          "appVersion": "1.0.0",
-          "appVersionCode": 1,
-          "signingKey": {
-            "path": "android.keystore",
-            "alias": "android"
-          }
-        }
-        EOF
-
-        cd android-app
-        bubblewrap update --manifest ../manifest.json --non-interactive || true
-        
-        # Nếu đã tạo được thư mục gradle thì build trực tiếp bằng gradlew cho nhanh và không bị hỏi
-        if [ -f "gradlew" ]; then
-          chmod +x gradlew
-          ./gradlew assembleDebug
-        else
-          bubblewrap build --non-interactive || true
-        fi
+    - run: npm install -g @bubblewrap/cli
     
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4
+    - name: Build APK
+      run: |
+        # Xóa thư mục cũ để tạo mới từ đầu
+        rm -rf android-app
+        
+        # Chạy init với --non-interactive và trỏ thẳng vào manifest
+        # Đây là cách chính thống để không bị dừng lại hỏi han
+        bubblewrap init --manifest ./manifest.json --directory ./android-app --non-interactive
+        
+        cd android-app
+        bubblewrap build --non-interactive
+    
+    - uses: actions/upload-artifact@v4
       with:
         name: dong-ho
-        path: |
-          android-app/app/build/outputs/apk/debug/*.apk
-          android-app/app/build/outputs/apk/release/*.apk
-          
+        path: android-app/app/build/outputs/apk/release/*.apk
+        
