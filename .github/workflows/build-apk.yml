@@ -29,7 +29,7 @@ jobs:
 
     - name: Build Android APK
       run: |
-        bubblewrap init --manifest ./manifest.json --directory ./android-app --skip-validation || true
+        echo "n" | bubblewrap init --manifest ./manifest.json --directory ./android-app --skip-validation || true
         cd android-app
         bubblewrap build --manifest ../manifest.json
     
