@@ -29,14 +29,12 @@ jobs:
 
     - name: Build Android APK
       run: |
-        # Tự động tạo thư mục android-app và cấu hình sẵn để không bị hỏi tương tác
         mkdir -p android-app
         
-        # Tạo file cấu hình bwr-config.json trực tiếp
         cat << 'EOF' > android-app/bwr-config.json
         {
           "manifestUrl": "../manifest.json",
-          "appName": "Đồng Hồ Của Sung Anh",
+          "appName": "Đồng Hồ Và Thi Đấu",
           "shortName": "DongHo",
           "startUrl": "./index.html",
           "display": "standalone",
@@ -54,9 +52,9 @@ jobs:
         EOF
 
         cd android-app
-        # Chạy build trực tiếp bằng file cấu hình không cần init
-        bubblewrap update --manifest ../manifest.json || true
-        bubblewrap build
+        # Thêm cờ --non-interactive để ép chạy ngầm tự động 100% không hỏi gì thêm
+        bubblewrap update --manifest ../manifest.json --non-interactive || true
+        bubblewrap build --non-interactive
     
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
