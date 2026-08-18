@@ -29,10 +29,34 @@ jobs:
 
     - name: Build Android APK
       run: |
-        # Chỉ định thẳng đường dẫn Java JDK để bỏ qua hoàn toàn câu hỏi tương tác
-        bubblewrap init --manifest ./manifest.json --directory ./android-app --skip-validation --path $JAVA_HOME || true
+        # Tự động tạo thư mục android-app và cấu hình sẵn để không bị hỏi tương tác
+        mkdir -p android-app
+        
+        # Tạo file cấu hình bwr-config.json trực tiếp
+        cat << 'EOF' > android-app/bwr-config.json
+        {
+          "manifestUrl": "../manifest.json",
+          "appName": "Đồng Hồ Của Sung Anh",
+          "shortName": "DongHo",
+          "startUrl": "./index.html",
+          "display": "standalone",
+          "themeColor": "#ff9a9e",
+          "backgroundColor": "#ffffff",
+          "iconUrl": "./anh.png",
+          "packageId": "com.sunganh.dongho",
+          "appVersion": "1.0.0",
+          "appVersionCode": 1,
+          "signingKey": {
+            "path": "android.keystore",
+            "alias": "android"
+          }
+        }
+        EOF
+
         cd android-app
-        bubblewrap build --manifest ../manifest.json
+        # Chạy build trực tiếp bằng file cấu hình không cần init
+        bubblewrap update --manifest ../manifest.json || true
+        bubblewrap build
     
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
