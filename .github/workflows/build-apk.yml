@@ -29,7 +29,8 @@ jobs:
 
     - name: Build Android APK
       run: |
-        echo "n" | bubblewrap init --manifest ./manifest.json --directory ./android-app --skip-validation || true
+        # Chỉ định thẳng đường dẫn Java JDK để bỏ qua hoàn toàn câu hỏi tương tác
+        bubblewrap init --manifest ./manifest.json --directory ./android-app --skip-validation --path $JAVA_HOME || true
         cd android-app
         bubblewrap build --manifest ../manifest.json
     
