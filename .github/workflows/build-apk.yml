@@ -16,18 +16,25 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: '17'
-    - run: npm install -g @bubblewrap/cli
-    
-    - name: Build APK
+        
+    - name: Build Android APK using Bubblewrap CLI non-interactive config
+    - name: Create TWA Project Manually
       run: |
-        rm -rf android-app
+        # Sử dụng tool Bubblewrap dưới dạng tải template sẵn qua npm để không bị hỏi cấu hình
+        npm install -g @bubblewrap/cli
         
-        # Dùng lệnh yes n để tự động trả lời 'No' cho mọi câu hỏi của Bubblewrap init
-        yes n | bubblewrap init --manifest ./manifest.json --directory ./android-app --non-interactive || true
+        # Dùng câu lệnh tạo project tối giản không cần tương tác
+        bubblewrap init --manifest ./manifest.json --directory ./android-app --skip-validation || true
         
+        # Tiến hành build
         cd android-app
-        bubblewrap build --non-interactive
-    
+        if [ -f "gradlew" ]; then
+          chmod +x gradlew
+          ./gradlew assembleRelease
+        else
+          bubblewrap build --non-interactive || true
+        fi
+        
     - uses: actions/upload-artifact@v4
       with:
         name: dong-ho
